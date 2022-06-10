@@ -1,10 +1,14 @@
 ## Install
 
-> curl -fsSL https://raw.githubusercontent.com/GeeScot/postgresql-check/main/install.sh | sudo bash
+```
+curl -fsSL https://raw.githubusercontent.com/GeeScot/postgresql-check/main/install.sh | sudo bash
+```
 
 ## Configure postgresql-check
 
-> sudo nano /lib/systemd/system/postgresql-check.service
+```
+sudo nano /lib/systemd/system/postgresql-check.service
+```
 
 Available Environment Variable Options
 
@@ -15,8 +19,13 @@ Available Environment Variable Options
 
 ## Restart
 
-> sudo systemctl daemon-reload
-> sudo systemctl restart postgresql-check
+```
+sudo systemctl daemon-reload
+```
+
+```
+sudo systemctl restart postgresql-check
+```
 
 ## Configure HAProxy (/etc/haproxy/haproxy.cfg)
 
@@ -60,9 +69,16 @@ listen postgresql-readonly
 
 ## Test
 
-> curl -v http://localhost:26726
+```
+curl -v http://localhost:26726
+```
 
 ## Load Testing (macOS)
 
-> brew install k6
-> k6 run --vus 10 --duration 30s script.js
+```
+brew install k6
+```
+
+```
+k6 run --vus 10 --duration 30s script.js
+```
