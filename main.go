@@ -54,13 +54,23 @@ func main() {
 
 	defer db.Close()
 
+	stmt, err := db.Prepare("select pg_is_in_recovery()")
+	if err != nil {
+		log.Printf("%s\n", err.Error())
+		return
+	}
+
 	isInRecoveryHandler := func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
 
-		rows, err := db.Query("select pg_is_in_recovery()")
-		if err != nil || !rows.Next() {
+		writeServiceUnavailable := func() {
 			log.Printf("%s\n", "[503] Service unavailable")
 			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+
+		rows, err := stmt.Query()
+		if err != nil || !rows.Next() {
+			writeServiceUnavailable()
 			return
 		}
 
@@ -70,15 +80,13 @@ func main() {
 		err = rows.Scan(&result)
 
 		if err != nil {
-			log.Printf("%s\n", "[503] Service unavailable")
-			w.WriteHeader(http.StatusServiceUnavailable)
+			writeServiceUnavailable()
 			return
 		}
 
 		isInRecovery, err := strconv.ParseBool(result)
 		if err != nil {
-			log.Printf("%s\n", "[503] Service unavailable")
-			w.WriteHeader(http.StatusServiceUnavailable)
+			writeServiceUnavailable()
 			return
 		}
 
