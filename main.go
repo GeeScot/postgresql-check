@@ -52,13 +52,14 @@ func main() {
 	db.SetMaxIdleConns(2)
 	db.SetMaxOpenConns(2)
 
-	defer db.Close()
-
 	stmt, err := db.Prepare("select pg_is_in_recovery()")
 	if err != nil {
 		log.Printf("%s\n", err.Error())
 		return
 	}
+
+	defer stmt.Close()
+	defer db.Close()
 
 	isInRecoveryHandler := func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
