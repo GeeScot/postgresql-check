@@ -6,12 +6,14 @@ sudo systemctl stop postgresql-check.service > /dev/null
 # Install unzip silently (required for unarchiving download)
 sudo apt install -y unzip > /dev/null
 
+TARGET_FILE=postgresql-check-linux-amd64.zip
+
 # Download the latest version
-wget -q --show-progress --progress=bar:force:noscroll https://github.com/GeeScot/postgresql-check/releases/download/latest/postgresql-check-linux-amd64.zip
+wget -q --show-progress --progress=bar:force:noscroll https://github.com/GeeScot/postgresql-check/releases/download/latest/$TARGET_FILE
 
 # Unzip and remove zip file
-unzip postgresql-check-linux-amd64.zip
-rm postgresql-check-linux-amd64.zip
+unzip $TARGET_FILE
+rm $TARGET_FILE
 
 # Move binary to /usr/local/bin/ folder and fix permissions
 sudo mv -f postgresql-check /usr/local/bin/
