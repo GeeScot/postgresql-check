@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/GeeScot/go-common/env"
-	"github.com/gin-gonic/gin"
 	_ "github.com/uptrace/bun/driver/pgdriver"
 )
 
@@ -20,13 +21,13 @@ func main() {
 	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/postgres?sslmode=disable&application_name=postgresql-check", pguser, pgpass, pghost, pgport)
 	db, err := sql.Open("pg", connectionString)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		log.Printf("%s\n", err.Error())
 		return
 	}
 
 	err = db.Ping()
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		log.Printf("%s\n", err.Error())
 		return
 	}
 
@@ -35,11 +36,13 @@ func main() {
 
 	defer db.Close()
 
-	isInRecovery := func(c *gin.Context) {
+	isInRecoveryHandler := func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+
 		rows, err := db.Query("select pg_is_in_recovery()")
 		if err != nil || !rows.Next() {
-			fmt.Printf("%s\n", err.Error())
-			c.Status(http.StatusServiceUnavailable)
+			log.Printf("%s\n", "[503] Service unavailable")
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
@@ -49,28 +52,29 @@ func main() {
 		err = rows.Scan(&result)
 
 		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			c.Status(http.StatusServiceUnavailable)
+			log.Printf("%s\n", "[503] Service unavailable")
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
 		isInRecovery, err := strconv.ParseBool(result)
 		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			c.Status(http.StatusServiceUnavailable)
+			log.Printf("%s\n", "[503] Service unavailable")
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 
+		var statusCode int
 		if isInRecovery {
-			c.String(http.StatusPartialContent, "Standby")
+			statusCode = http.StatusPartialContent
 		} else {
-			c.String(http.StatusOK, "Primary")
+			statusCode = http.StatusOK
 		}
+
+		w.WriteHeader(statusCode)
+		log.Printf("[%d] Request time: %s\n", statusCode, time.Since(t).Truncate(time.Microsecond))
 	}
 
-	r := gin.Default()
-	r.OPTIONS("/", isInRecovery)
-	// r.GET("/", isInRecovery)
-
-	r.Run("0.0.0.0:26726")
+	http.HandleFunc("/", isInRecoveryHandler)
+	log.Fatal(http.ListenAndServe(":26726", nil))
 }

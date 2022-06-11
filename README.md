@@ -67,6 +67,16 @@ listen postgresql-readonly
     server postgresql1 replica-server-ip:6432 check port 26726
 ```
 
+## Run
+
+```
+go build
+```
+
+```
+PGPASS=password ./postgresql-check
+```
+
 ## Test
 
 ```
