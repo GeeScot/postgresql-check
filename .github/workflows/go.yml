@@ -20,13 +20,10 @@ jobs:
 
     - name: Build
       run: GOOS=linux GOARCH=amd64 go build
-      
-    - name: Bundle
-      run: zip -qq -o postgresql-check-linux-amd64.zip postgresql-check
-      
+
     - name: Upload
       uses: actions/upload-artifact@v3.1.0
       with:
         name: postgresql-check-linux-amd64
-        path: postgresql-check-linux-amd64.zip
-        retention-days: 90
+        path: postgresql-check
+        retention-days: 2
