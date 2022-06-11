@@ -1,7 +1,7 @@
 ## Install
 
 ```
-curl -fsSL https://raw.githubusercontent.com/GeeScot/postgresql-check/main/scripts/install.sh | sudo bash
+curl -fsSL https://gee.dev/install/postgresql-check | sudo bash
 ```
 
 ## Configure postgresql-check
