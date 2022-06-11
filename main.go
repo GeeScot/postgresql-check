@@ -2,23 +2,41 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/GeeScot/go-common/env"
+	"github.com/GeeScot/go-common/fileio"
 	_ "github.com/uptrace/bun/driver/pgdriver"
 )
 
-func main() {
-	pguser := env.Optional("PGUSER", "postgres")
-	pgpass := env.Optional("PGPASS", "")
-	pghost := env.Optional("PGHOST", "localhost")
-	pgport := env.Optional("PGPORT", "5432")
+type Config struct {
+	Postgres struct {
+		Host     string `json:"host"`
+		Port     int    `json:"port"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	} `json:"postgres"`
+	Port int `json:"port"`
+}
 
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/postgres?sslmode=disable&application_name=postgresql-check", pguser, pgpass, pghost, pgport)
+func main() {
+	configFile := flag.String("c", "/etc/postgresql-check/config.json", "config file")
+	flag.Parse()
+
+	var config Config
+	fileio.ReadJSON(*configFile, &config)
+
+	connectionString := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/postgres?sslmode=disable&application_name=postgresql-check",
+		config.Postgres.Username,
+		config.Postgres.Password,
+		config.Postgres.Host,
+		config.Postgres.Port)
+
 	db, err := sql.Open("pg", connectionString)
 	if err != nil {
 		log.Printf("%s\n", err.Error())
@@ -76,5 +94,5 @@ func main() {
 	}
 
 	http.HandleFunc("/", isInRecoveryHandler)
-	log.Fatal(http.ListenAndServe(":26726", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil))
 }

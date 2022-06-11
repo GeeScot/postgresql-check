@@ -1,15 +1,50 @@
 #!/bin/bash
 
-sudo apt install unzip
-wget https://github.com/GeeScot/postgresql-check/releases/download/latest/postgresql-check-linux-amd64.zip
+# Stop the service if it is already running
+sudo systemctl stop postgresql-check.service > /dev/null
 
+# Install unzip silently (required for unarchiving download)
+sudo apt install -y unzip > /dev/null
+
+# Download the latest version
+wget -q --show-progress --progress=bar:force:noscroll https://github.com/GeeScot/postgresql-check/releases/download/latest/postgresql-check-linux-amd64.zip
+
+# Unzip and remove zip file
 unzip postgresql-check-linux-amd64.zip
 rm postgresql-check-linux-amd64.zip
 
-sudo mv postgresql-check /usr/local/bin/
+# Move binary to /usr/local/bin/ folder and fix permissions
+sudo mv -f postgresql-check /usr/local/bin/
 sudo chown root:root /usr/local/bin/postgresql-check
 
-sudo tee /lib/systemd/system/postgresql-check.service > /dev/null <<EOT
+# File paths
+APP_PATH=/etc/postgresql-check
+CONFIG_FILE="${APP_PATH}/config.json"
+SERVICE_FILE=/lib/systemd/system/postgresql-check.service
+
+# Write config file if not exists
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  sudo mkdir -p $APP_PATH
+  sudo tee $CONFIG_FILE > /dev/null <<EOT
+  {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "password"
+    },
+    "port": 26726
+  }
+EOT
+fi
+
+# Write service file if not exists
+if [[ -f "$SERVICE_FILE" ]]; then
+    sudo systemctl start postgresql-check.service
+    exit 0
+fi
+
+sudo tee $SERVICE_FILE > /dev/null <<EOT
 [Unit]
 Description=postgresql-check
 
@@ -17,10 +52,6 @@ Description=postgresql-check
 Type=simple
 Restart=always
 RestartSec=5s
-Environment="PGUSER=postgres"
-Environment="PGPASS="
-Environment="PGHOST=localhost"
-Environment="PGPORT=5432"
 ExecStart=/usr/local/bin/postgresql-check
 
 [Install]
