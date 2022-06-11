@@ -1,30 +1,61 @@
 ## Install
 
-```
+```console
 curl -fsSL https://gee.dev/install/postgresql-check | sudo bash
 ```
 
 ## Configure postgresql-check
 
-```
-sudo nano /lib/systemd/system/postgresql-check.service
+```console
+sudo nano /etc/postgresql-check/config.json
 ```
 
-Available Environment Variable Options
-
-- PGUSER (default: postgres)
-- PGPASS (default: no-password)
-- PGHOST (default: localhost)
-- PGPORT (default: 5433)
+```json
+{
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "password"
+  },
+  "port": 26726
+}
+```
 
 ## Restart
 
-```
+```console
 sudo systemctl daemon-reload
 ```
 
-```
+```console
 sudo systemctl restart postgresql-check
+```
+
+## Run
+
+```console
+go build
+```
+
+```console
+sudo systemctl start postgresql-check.service
+```
+
+## Test
+
+```console
+curl -v http://localhost:26726
+```
+
+## Load Testing (macOS)
+
+```console
+brew install k6
+```
+
+```console
+k6 run --vus 10 --duration 30s script.js
 ```
 
 ## Configure HAProxy (/etc/haproxy/haproxy.cfg)
@@ -65,30 +96,4 @@ listen postgresql-readonly
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     server postgresql0 primary-server-ip:6432 check port 26726
     server postgresql1 replica-server-ip:6432 check port 26726
-```
-
-## Run
-
-```
-go build
-```
-
-```
-PGPASS=password ./postgresql-check
-```
-
-## Test
-
-```
-curl -v http://localhost:26726
-```
-
-## Load Testing (macOS)
-
-```
-brew install k6
-```
-
-```
-k6 run --vus 10 --duration 30s script.js
 ```
