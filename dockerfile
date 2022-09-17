@@ -20,6 +20,4 @@ FROM scratch
 
 COPY --from=builder /app/exec /app/exec
 
-EXPOSE 9000
-
 ENTRYPOINT [ "/app/exec" ]
