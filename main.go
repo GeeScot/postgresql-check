@@ -86,7 +86,7 @@ func main() {
 
 		var statusCode int
 		if isInRecovery {
-			statusCode = http.StatusServiceUnavailable
+			statusCode = http.StatusPartialContent
 		} else {
 			statusCode = http.StatusOK
 		}
