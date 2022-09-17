@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  postgresql-check:
+    container_name: postgresql-check
+    image: nanoscaledev/postgresql-check:latest
+    restart: unless-stopped
+    ports:
+      - "26726:26726"
+    environment: 
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=password

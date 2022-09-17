@@ -2,40 +2,33 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/GeeScot/go-common/fileio"
+	"github.com/GeeScot/go-common/env"
 	_ "github.com/uptrace/bun/driver/pgdriver"
 )
 
 type Config struct {
-	Postgres struct {
-		Host     string `json:"host"`
-		Port     int    `json:"port"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-	} `json:"postgres"`
-	Port int `json:"port"`
+	Host string `env:"POSTGRES_HOST"`
+	Port string `env:"POSTGRES_PORT"`
+	User string `env:"POSTGRES_USERNAME"`
+	Pass string `env:"POSTGRES_PASSWORD"`
 }
 
 func main() {
-	configFile := flag.String("c", "/etc/postgresql-check/config.json", "config file")
-	flag.Parse()
-
 	var config Config
-	fileio.ReadJSON(*configFile, &config)
+	env.Read(&config)
 
 	connectionString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/postgres?sslmode=disable&application_name=postgresql-check",
-		config.Postgres.Username,
-		config.Postgres.Password,
-		config.Postgres.Host,
-		config.Postgres.Port)
+		"postgres://%s:%s@%s:%s/postgres?sslmode=disable&application_name=postgresql-check",
+		config.User,
+		config.Pass,
+		config.Host,
+		config.Port)
 
 	db, err := sql.Open("pg", connectionString)
 	if err != nil {
@@ -103,5 +96,5 @@ func main() {
 	}
 
 	http.HandleFunc("/", isInRecoveryHandler)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil))
+	log.Fatal(http.ListenAndServe(":26726", nil))
 }
